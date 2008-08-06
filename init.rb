@@ -1,1 +1,1 @@
-# Include hook code here
+require 'stable_session_id'
