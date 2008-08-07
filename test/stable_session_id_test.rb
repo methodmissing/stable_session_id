@@ -31,6 +31,8 @@ class StableSessionIdTest < Test::Unit::TestCase
       assert_not_nil session['user_id']
       assert_not_nil session[:session_id]      
       assert_not_equal session.session_id, cookie_value(:typical)
+      assert session.session_id.size == 32
+      assert_equal session.session_id, session[:session_id]  
     end
   end
 
