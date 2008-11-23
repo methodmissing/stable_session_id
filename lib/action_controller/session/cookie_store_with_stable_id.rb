@@ -46,11 +46,13 @@ module ActionController
         end        
         
         def stable_session_id!( data  )
+          log( data.inspect )
           return data unless @stable_session_id
           ( data ||= {} ).merge( inject_stable_session_id!( data ) )
         end
 
         def inject_stable_session_id!( data )
+          log( data.inspect )
           if data.respond_to?(:key?) && !data.key?( :session_id )
             log("inject stable session id")
             { :session_id => CGI::Session.generate_unique_id }
