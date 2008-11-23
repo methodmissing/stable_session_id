@@ -24,6 +24,7 @@ module ActionController
         def marshal_with_stable_id( session )
           log("marshal with stable id")
           session = stable_session_id!( session )
+          log_session_id
           marshal_without_stable_id( session )
         end
         
@@ -31,6 +32,7 @@ module ActionController
           log("unmarshal cookie")
           if cookie
             log("have a cookie")
+            log_session_id
             cookie_data = verifier.verify(cookie)
             returning( stable_session_id!( cookie_data ) ) do |data|
                @session.instance_variable_set(:@session_id, data[:session_id]) if @stable_session_id 
@@ -38,6 +40,7 @@ module ActionController
           end
           rescue ActiveSupport::MessageVerifier::InvalidSignature
             log("invalid cookie signature")
+            log_session_id
             delete
             raise TamperedWithCookie
         end        
@@ -56,6 +59,10 @@ module ActionController
            {}
           end  
         end        
+        
+        def log_session_id
+          log @session.instance_variable_get(:@session_id)
+        end
         
         def log( message )
           ::ActionController::Base.logger.info( "** #{message}" ) if ::ActionController::Base.logger
