@@ -27,18 +27,14 @@ module ActionController
         
         def unmarshal(cookie)
           if cookie
-            data, digest = cookie.split('--')
-
-            # Do two checks to transparently support old double-escaped data.
-            unless digest == generate_digest(data) || digest == generate_digest(data = CGI.unescape(data))
-              delete
-              raise TamperedWithCookie
-            end
-
-            returning( stable_session_id!( Marshal.load(ActiveSupport::Base64.decode64(data)) ) ) do |data|
+            cookie_data = verifier.verify(cookie)
+            returning( stable_session_id!( cookie_data ) ) do |data|
                @session.instance_variable_set(:@session_id, data[:session_id]) if @stable_session_id 
             end
           end
+          rescue ActiveSupport::MessageVerifier::InvalidSignature
+            delete
+            raise TamperedWithCookie
         end        
         
         def stable_session_id!( data  )
