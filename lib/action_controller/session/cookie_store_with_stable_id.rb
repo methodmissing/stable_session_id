@@ -24,6 +24,7 @@ module ActionController
         def marshal_with_stable_id( session )
           log("marshal with stable id")
           session = stable_session_id!( session )
+          @session.instance_variable_set(:@session_id, session[:session_id]) if @stable_session_id
           log_session_id
           marshal_without_stable_id( session )
         end
