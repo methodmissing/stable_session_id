@@ -48,6 +48,7 @@ module ActionController
         def stable_session_id!( data  )
           log( data.inspect )
           return data unless @stable_session_id
+          log("stable_session_id!")
           ( data ||= {} ).merge( inject_stable_session_id!( data ) )
           @session.instance_variable_set(:@session_id, data[:session_id]) if @stable_session_id
           data
