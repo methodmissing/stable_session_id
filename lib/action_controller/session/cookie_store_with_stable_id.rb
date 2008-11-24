@@ -24,7 +24,6 @@ module ActionController
         def marshal_with_stable_id( session )
           log("marshal with stable id")
           session = stable_session_id!( session )
-          @session.instance_variable_set(:@session_id, session[:session_id]) if @stable_session_id
           log_session_id
           marshal_without_stable_id( session )
         end
@@ -32,24 +31,26 @@ module ActionController
         def unmarshal(cookie)
           log("unmarshal cookie")
           if cookie
-            log("have a cookie")
-            log_session_id
-            cookie_data = verifier.verify(cookie)
-            returning( stable_session_id!( cookie_data ) ) do |data|
-               @session.instance_variable_set(:@session_id, data[:session_id]) if @stable_session_id 
+            begin
+              log("have a cookie")
+              log_session_id
+              cookie_data = verifier.verify(cookie)
+              stable_session_id!( cookie_data )
+            rescue ActiveSupport::MessageVerifier::InvalidSignature
+              log("invalid cookie signature")
+              log_session_id
+              delete
+              raise TamperedWithCookie
             end
           end
-          rescue ActiveSupport::MessageVerifier::InvalidSignature
-            log("invalid cookie signature")
-            log_session_id
-            delete
-            raise TamperedWithCookie
         end        
         
         def stable_session_id!( data  )
           log( data.inspect )
           return data unless @stable_session_id
           ( data ||= {} ).merge( inject_stable_session_id!( data ) )
+          @session.instance_variable_set(:@session_id, data[:session_id]) if @stable_session_id
+          data
         end
 
         def inject_stable_session_id!( data )
