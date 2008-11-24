@@ -7,7 +7,7 @@ class CGI
       if @data[:session_id]
         @data[:session_id]
       else
-        super
+        @session_id
       end    
     end
       
