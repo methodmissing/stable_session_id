@@ -18,12 +18,14 @@ module ActionController
           log("initialize with stable id")
           options.reverse_merge!( 'stable_session_id' => false )
           @stable_session_id = options['stable_session_id']
+          log("initialize without stable id")
           initialize_without_stable_id( session, options )
         end
         
         def marshal_with_stable_id( session )
           log("marshal with stable id")
           session = stable_session_id!( session )
+          log( session.inspect )
           log_session_id
           marshal_without_stable_id( session )
         end
@@ -35,7 +37,9 @@ module ActionController
               log("have a cookie")
               log_session_id
               cookie_data = verifier.verify(cookie)
+              log(cookie_data)
               stable_session_id!( cookie_data )
+              log( session_id )
             rescue ActiveSupport::MessageVerifier::InvalidSignature
               log("invalid cookie signature")
               log_session_id
