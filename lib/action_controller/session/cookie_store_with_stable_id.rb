@@ -51,6 +51,7 @@ module ActionController
           log("stable_session_id!")
           ( data ||= {} ).merge( inject_stable_session_id!( data ) )
           @session.instance_variable_set(:@session_id, data[:session_id]) if @stable_session_id
+          log( @session.inspect )
           data
         end
 
