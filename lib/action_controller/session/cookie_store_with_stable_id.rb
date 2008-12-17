@@ -8,6 +8,7 @@ module ActionController
         end
         
         def session_id
+          load! unless @loaded
           @id
         end
         
@@ -15,8 +16,8 @@ module ActionController
           def load!
             session = @by.send(:load_session, @env)
             ::ActionController::Base.logger.info "session load is #{session.inspect}"
-            replace(session)
             @id = session[:session_id]
+            replace(session)
             @loaded = true
           end
           
@@ -45,7 +46,7 @@ module ActionController
         end
         
         def marshal_with_stable_id( session )
-          ::ActionController::Base.logger.info "marshal_with_stable_id"
+          ::ActionController::Base.logger.info "marshal_with_stable_id #{session.inspect}"
           session = stable_session_id!( session )
           marshal_without_stable_id( session )
         end
@@ -110,14 +111,17 @@ module ActionController
         def stable_session_id!( data  )
           return data unless @stable_session_id
           ( data ||= {} ).merge!( inject_stable_session_id!( data ) )
+          ::ActionController::Base.logger.info "stable_session_id! #{data.inspect}"
           #@session.instance_variable_set(:@session_id, data[:session_id])
           data
         end
 
         def inject_stable_session_id!( data )
           if data.respond_to?(:key?) && !data.key?( :session_id )
+            ::ActionController::Base.logger.info "no session_id"
             { :session_id => ::ActiveSupport::SecureRandom.hex(16) }
           else
+            ::ActionController::Base.logger.info "has session_id"
            {}
           end  
         end        
