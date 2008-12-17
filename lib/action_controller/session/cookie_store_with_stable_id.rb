@@ -1,6 +1,26 @@
 module ActionController
   module Session
     module CookieStoreWithStableSessionId
+      module SessionHashExtensions
+        
+        def self.install!
+          ::ActionController::Session::CookieStore::SessionHash.send( :include, self )
+        end
+        
+        def session_id
+          @id
+        end
+        
+        private
+          def load!
+            session = @by.send(:load_session, @env)
+            ::ActionController::Base.logger.info "session load is #{session.inspect}"
+            replace(session)
+            @id = session[:session_id]
+            @loaded = true
+          end
+          
+      end  
       
       def self.install!
         ::ActionController::Session::CookieStore.send :include, self
@@ -25,6 +45,7 @@ module ActionController
         end
         
         def marshal_with_stable_id( session )
+          ::ActionController::Base.logger.info "marshal_with_stable_id"
           session = stable_session_id!( session )
           marshal_without_stable_id( session )
         end
@@ -77,23 +98,7 @@ module ActionController
             #delete
             #raise TamperedWithCookie
             nil
-        end        
-        
-        class SessionHash < AbstractStore::SessionHash
-          
-          def session_id
-            @id
-          end
-          
-          private
-            def load!
-              session = @by.send(:load_session, @env)
-              ::ActionController::Base.logger.info "session load is #{session.inspect}"
-              replace(session)
-              @id = session[:session_id]
-              @loaded = true
-            end
-        end        
+        end            
         
         def load_session(env)
           request = Rack::Request.new(env)
@@ -124,3 +129,4 @@ module ActionController
 end
 
 ActionController::Session::CookieStoreWithStableSessionId.install!
+ActionController::Session::CookieStoreWithStableSessionId::SessionHashExtensions.install!

@@ -23,7 +23,7 @@ class CookieStoreTest < ActionController::IntegrationTest
 
     def stable_session_id
       session[:session_id] = 'stable_id'
-      render :text => session.id
+      render :text => session.session_id
     end
 
     def set_session_value

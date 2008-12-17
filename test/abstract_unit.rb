@@ -27,7 +27,7 @@ require 'action_view/test_case'
 # Show backtraces for deprecated behavior for quicker cleanup.
 ActiveSupport::Deprecation.debug = true
 
-ActionController::Base.logger = nil
+ActionController::Base.logger = Logger.new( STDOUT )
 ActionController::Routing::Routes.reload rescue nil
 
 ActionController::Base.session_store = nil
