@@ -42,6 +42,9 @@ module ActionController
         end        
         
         class SessionHash < AbstractStore::SessionHash
+          
+          alias :session_id :id
+          
           private
             def load!
               session = @by.send(:load_session, @env)
