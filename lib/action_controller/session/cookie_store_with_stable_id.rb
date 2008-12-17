@@ -29,6 +29,44 @@ module ActionController
           marshal_without_stable_id( session )
         end
         
+        def call(env)
+          session_data = SessionHash.new(self, env)
+          ::ActionController::Base.logger.info "[call] session_data #{session_data.inspect}"
+          original_value = session_data.dup
+
+          env[ENV_SESSION_KEY] = session_data
+          env[ENV_SESSION_OPTIONS_KEY] = @default_options.dup
+
+          status, headers, body = @app.call(env)
+
+          unless env[ENV_SESSION_KEY] == original_value
+            session_data = marshal(env[ENV_SESSION_KEY].to_hash)
+
+            ::ActionController::Base.logger.info "[call], not equal to original value, session data #{session_data.inspect}"
+
+            raise CookieOverflow if session_data.size > MAX
+
+            options = env[ENV_SESSION_OPTIONS_KEY]
+            cookie = Hash.new
+            cookie[:value] = session_data
+            unless options[:expire_after].nil?
+              cookie[:expires] = Time.now + options[:expire_after]
+            end
+
+            cookie = build_cookie(@key, cookie.merge(options))
+            case headers[HTTP_SET_COOKIE]
+            when Array
+              headers[HTTP_SET_COOKIE] << cookie
+            when String
+              headers[HTTP_SET_COOKIE] = [headers[HTTP_SET_COOKIE], cookie]
+            when nil
+              headers[HTTP_SET_COOKIE] = cookie
+            end
+          end
+
+          [status, headers, body]
+        end        
+        
         def unmarshal(cookie)
           ::ActionController::Base.logger.info "Raw cookie is #{cookie.inspect}"
           if cookie
@@ -54,6 +92,13 @@ module ActionController
               @loaded = true
             end
         end        
+        
+        def load_session(env)
+          request = Rack::Request.new(env)
+          ::ActionController::Base.logger.info "cookies is #{request.cookies.inspect}"
+          session_data = request.cookies[@key]
+          unmarshal(session_data) || {}
+        end
         
         def stable_session_id!( data  )
           return data unless @stable_session_id
