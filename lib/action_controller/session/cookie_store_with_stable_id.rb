@@ -81,7 +81,9 @@ module ActionController
         
         class SessionHash < AbstractStore::SessionHash
           
-          alias :session_id :id
+          def session_id
+            @id
+          end
           
           private
             def load!
