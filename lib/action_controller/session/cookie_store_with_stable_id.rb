@@ -9,7 +9,11 @@ module ActionController
         
         def session_id
           load! unless @loaded
-          @id || fetch(:session_id)
+          begin
+            @id || fetch(:session_id)
+          rescue
+            nil
+          end  
         end
         
         private
