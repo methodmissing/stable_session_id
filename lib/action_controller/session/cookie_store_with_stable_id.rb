@@ -65,7 +65,7 @@ module ActionController
         def load_session(env)
           request = Rack::Request.new(env)
           session_data = request.cookies[@key]
-          unmarshal(session_data) || {}
+          unmarshal(session_data) || inject_stable_session_id!( {} )
         end
         
         def stable_session_id!( data  )
